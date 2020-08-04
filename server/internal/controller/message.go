@@ -27,7 +27,13 @@ func createMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model.CreateMessage(m)
+	db, ok := r.Context().Value("db").(*model.DB)
+	if !ok {
+		http.Error(w, "could not get database connection pool from context", 500)
+		return
+	}
+
+	model.CreateMessage(db, m)
 	render.Status(r, http.StatusCreated)
 	render.Render(w, r, m)
 }

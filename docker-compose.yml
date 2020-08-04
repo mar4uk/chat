@@ -5,6 +5,8 @@ services:
     build: 
       context: ./server
       dockerfile: Dockerfile
+    depends_on: 
+      - mongo
     ports:
       - 8080:8080
   mongo:

@@ -11,11 +11,11 @@ var (
 	messageController message
 )
 
-func Startup(r chi.Router) {
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+func Startup(router chi.Router) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hi"))
 	})
 
-	chatController.registerRoutes(r)
-	messageController.registerRoutes(r)
+	chatController.registerRoutes(router)
+	messageController.registerRoutes(router)
 }

@@ -1,11 +1,14 @@
 package model
 
 import (
+	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/render"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Chat struct {
@@ -13,35 +16,40 @@ type Chat struct {
 	Title string `json:"title"`
 }
 
-var chats = []*Chat{
-	{ID: 1, Title: "Default chat"},
-}
-
-func GetChat(id string) (*Chat, error) {
+func GetChat(db *DB, id string) (*Chat, error) {
 	chatID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, errors.New("chat id is incorrect")
 	}
 
-	for _, c := range chats {
-		if c.ID == chatID {
-			return c, nil
-		}
+	var chat *Chat
+
+	if err = db.Collection("chats").FindOne(context.TODO(), bson.M{"id": chatID}).Decode(&chat); err != nil {
+		log.Fatal(err)
+		return nil, errors.New("chat not found")
 	}
 
-	return nil, errors.New("chat not found")
+	return chat, nil
 }
 
 func (c *Chat) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func GetChatMessages(c *Chat) []render.Renderer {
+func GetChatMessages(db *DB, c *Chat) []render.Renderer {
 	list := []render.Renderer{}
-	for _, m := range messages {
-		if c.ID == m.ChatID {
-			list = append(list, m)
+	cursor, err := db.Collection("messages").Find(context.TODO(), bson.M{"chatId": c.ID})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer cursor.Close(context.TODO())
+	for cursor.Next(context.TODO()) {
+		var message Message
+		if err = cursor.Decode(&message); err != nil {
+			log.Fatal(err)
 		}
+		list = append(list, &message)
 	}
 
 	return list
