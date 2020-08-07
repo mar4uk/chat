@@ -13,6 +13,8 @@ import {
   makeStyles
 } from '@material-ui/core';
 
+import SendMessageForm from './SendMessageForm'
+
 const useStyles = makeStyles({
   wrapper: {
     height: "100vh",
@@ -24,7 +26,7 @@ const useStyles = makeStyles({
   },
   formWrapper: {
     display: "flex",
-    flex: "0 20%",
+    flex: "0 0 auto",
     minHeight: 0,
   },
   chatContainer: {
@@ -55,7 +57,7 @@ function App() {
       });
     }
     fetchData()
-  });
+  }, []);
 
   return (
     <Container maxWidth="md">
@@ -95,7 +97,7 @@ function App() {
         <Grid item className={classes.formWrapper}>
           <Paper className={classes.formContainer}>
             <Box p={2}>
-              
+              <SendMessageForm />
             </Box>
           </Paper>
         </Grid>
