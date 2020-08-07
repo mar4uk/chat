@@ -9,14 +9,34 @@ import {
   ListItem,
   ListItemText,
   Box,
+  Grid,
   makeStyles
 } from '@material-ui/core';
 
 const useStyles = makeStyles({
   wrapper: {
     height: "100vh",
-    overflowY: "scroll"
   },
+  chatWrapper: {
+    display: "flex",
+    flex: "1 0 80%",
+    minHeight: 0,
+  },
+  formWrapper: {
+    display: "flex",
+    flex: "0 20%",
+    minHeight: 0,
+  },
+  chatContainer: {
+    overflowY: "scroll",
+    height: "100%",
+    width: "100%",
+  },
+  formContainer: {
+    overflowY: "scroll",
+    height: "100%",
+    width: "100%",
+  }
 });
 
 function App() {
@@ -39,36 +59,47 @@ function App() {
 
   return (
     <Container maxWidth="md">
-      <Paper className={classes.wrapper}>
-        <List>
-          {data.hits.map((hit) => (
-            <ListItem key={hit.id} style={{justifyContent: hit.userId === currentUserId ? "flex-end" : "flex-start"}}>
-              <Box color="primary.text" p={2} boxShadow={1}>
-                <ListItemText
-                  primary={
-                    <Typography component="span" variant="subtitle1">
-                      {hit.userId}
-                    </Typography>
-                  }
-                  secondary={
-                    <React.Fragment>
-                      <Typography
-                        component="span"
-                        color="textPrimary"
-                      >
-                        {hit.text}
-                      </Typography>
-                      <Typography component="span" display="block" variant="body2">
-                        {moment(hit.createdAt).format('LLL')}
-                      </Typography>
-                    </React.Fragment>
-                  }
-                />
-              </Box>
-            </ListItem>
-          ))}
-        </List>
-      </Paper>
+      <Grid container direction="column" className={classes.wrapper} spacing={2} wrap="nowrap">
+        <Grid item className={classes.chatWrapper}>
+          <Paper className={classes.chatContainer}>
+            <List>
+              {data.hits.map((hit) => (
+                <ListItem key={hit.id} style={{justifyContent: hit.userId === currentUserId ? "flex-end" : "flex-start"}}>
+                  <Box color="primary.text" p={2} boxShadow={1}>
+                    <ListItemText
+                      primary={
+                        <Typography component="span" variant="subtitle1">
+                          {hit.userId}
+                        </Typography>
+                      }
+                      secondary={
+                        <React.Fragment>
+                          <Typography
+                            component="span"
+                            color="textPrimary"
+                          >
+                            {hit.text}
+                          </Typography>
+                          <Typography component="span" display="block" variant="body2">
+                            {moment(hit.createdAt).format('LLL')}
+                          </Typography>
+                        </React.Fragment>
+                      }
+                    />
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        </Grid>
+        <Grid item className={classes.formWrapper}>
+          <Paper className={classes.formContainer}>
+            <Box p={2}>
+              
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
     </Container>
   );
 }
