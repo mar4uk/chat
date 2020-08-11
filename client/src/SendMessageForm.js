@@ -36,9 +36,8 @@ function SendMessageForm() {
     }
     try {
       await axios.post(
-        'http://localhost:8080/messages',
+        'http://localhost:8080/chat/1/messages',
         {
-          chatId: 1,
           userId: 1,
           text: values.text,
           createdAt: "2020-01-02T15:04:07-0700"
