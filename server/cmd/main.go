@@ -2,44 +2,35 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/cors"
-	"github.com/go-chi/render"
-	"github.com/mar4uk/chat/internal/controller"
-	"github.com/mar4uk/chat/internal/model"
+	"github.com/mar4uk/chat/internal/app"
+	"github.com/mar4uk/chat/internal/http"
+	"github.com/mar4uk/chat/internal/store"
 )
 
 func main() {
-	client, err := model.NewClient("mongodb://root:password@localhost:27017")
+	ctx := context.Background()
 
-	if err != nil {
+	var (
+		db    store.Database
+		chat  app.App
+		proxy http.Proxy
+		err   error
+	)
+
+	if db, err = store.NewMongoDatabase(ctx, "mongodb://root:password@localhost:27017", "chat"); err != nil {
 		log.Fatal(err)
+		return
 	}
-	db := &model.DB{client.Database("chat")}
-	defer client.Disconnect(context.TODO())
+	defer db.Close(ctx)
 
-	fmt.Println("Connected to MongoDB!")
+	chat = app.NewApp(db)
 
-	r := chi.NewRouter()
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
-	r.Use(render.SetContentType(render.ContentTypeJSON))
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "db", db)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	})
-	controller.Startup(r)
-	http.ListenAndServe(":8080", r)
+	proxy = http.NewProxy(chat)
+
+	if err = proxy.Serve(); err != nil {
+		log.Fatal(err)
+		return
+	}
 }

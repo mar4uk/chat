@@ -1,4 +1,4 @@
-package model
+package http
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/render"
 )
 
+// ErrResponse is struct which describes http error
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error
 	HTTPStatusCode int   `json:"-"` // http response status code
@@ -15,11 +16,13 @@ type ErrResponse struct {
 	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
 }
 
+// Render is render method for error
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	render.Status(r, e.HTTPStatusCode)
 	return nil
 }
 
+// ErrInvalidRequest returns 400 error
 func ErrInvalidRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -29,6 +32,7 @@ func ErrInvalidRequest(err error) render.Renderer {
 	}
 }
 
+// ErrRender returns 422 error
 func ErrRender(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -38,4 +42,15 @@ func ErrRender(err error) render.Renderer {
 	}
 }
 
+// ErrInternalServer returns 500 error
+func ErrInternalServer(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 500,
+		StatusText:     "Internal server error.",
+		ErrorText:      err.Error(),
+	}
+}
+
+// ErrNotFound returns 404 error
 var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
