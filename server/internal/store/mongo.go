@@ -74,11 +74,11 @@ func (m *mongoDatabase) GetChat(ctx context.Context, chatID int64) (*Chat, error
 	return chat, nil
 }
 
-func (m *mongoDatabase) CreateMessage(ctx context.Context, message Message) error {
+func (m *mongoDatabase) CreateMessage(ctx context.Context, message Message) (primitive.ObjectID, error) {
 	message.ID = primitive.NewObjectID()
 	if _, err := m.db.Collection("messages").InsertOne(ctx, message); err != nil {
-		return err
+		return primitive.NilObjectID, err
 	}
 
-	return nil
+	return message.ID, nil
 }

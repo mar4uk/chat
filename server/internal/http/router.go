@@ -59,5 +59,7 @@ func setupRouter(a app.App) http.Handler {
 		})
 	})
 
+	r.Method(http.MethodGet, "/socket", &websocketHandler{app: a})
+
 	return r
 }

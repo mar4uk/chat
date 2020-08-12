@@ -11,7 +11,7 @@ import (
 type App interface {
 	GetMessages(ctx context.Context, chatID int64) ([]*Message, error)
 	GetChat(ctx context.Context, chatID int64) (*Chat, error)
-	CreateMessage(ctx context.Context, chatID int64, message Message) error
+	CreateMessage(ctx context.Context, chatID int64, message Message) (primitive.ObjectID, error)
 }
 
 type app struct {
@@ -73,9 +73,8 @@ func (a *app) GetChat(ctx context.Context, chatID int64) (*Chat, error) {
 	}, nil
 }
 
-func (a *app) CreateMessage(ctx context.Context, chatID int64, message Message) error {
-	err := a.db.CreateMessage(ctx, store.Message{
-		ID:        message.ID,
+func (a *app) CreateMessage(ctx context.Context, chatID int64, message Message) (primitive.ObjectID, error) {
+	messageID, err := a.db.CreateMessage(ctx, store.Message{
 		ChatID:    chatID,
 		UserID:    message.UserID,
 		Text:      message.Text,
@@ -83,8 +82,8 @@ func (a *app) CreateMessage(ctx context.Context, chatID int64, message Message) 
 	})
 
 	if err != nil {
-		return err
+		return messageID, err
 	}
 
-	return nil
+	return messageID, nil
 }

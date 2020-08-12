@@ -1,6 +1,5 @@
 import React from 'react';
 import { Formik, Field, Form } from 'formik';
-import axios from 'axios';
 import {
   TextField
 } from '@material-ui/core';
@@ -29,26 +28,7 @@ const initialValues = {
   text: ''
 };
 
-function SendMessageForm() {
-  async function onSubmit (values, { resetForm }) {
-    if (!values.text) {
-      return;
-    }
-    try {
-      await axios.post(
-        'http://localhost:8080/chat/1/messages',
-        {
-          userId: 1,
-          text: values.text,
-          createdAt: "2020-01-02T15:04:07-0700"
-        }
-      );
-      resetForm(initialValues);
-    } catch (err) {
-      alert('ERROR!')
-    }
-  }
-
+function SendMessageForm({ onSubmit }) {
   return (
     <Formik
       initialValues={initialValues}

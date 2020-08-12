@@ -25,6 +25,6 @@ type Chat struct {
 type Database interface {
 	GetMessages(ctx context.Context, chatID int64) ([]Message, error)
 	GetChat(ctx context.Context, chatID int64) (*Chat, error)
-	CreateMessage(ctx context.Context, message Message) error
+	CreateMessage(ctx context.Context, message Message) (primitive.ObjectID, error)
 	Close(ctx context.Context)
 }

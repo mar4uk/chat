@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import moment from "moment";
 import {
@@ -13,7 +13,7 @@ import {
   makeStyles
 } from '@material-ui/core';
 
-import SendMessageForm from './SendMessageForm'
+import SendMessageForm from './SendMessageForm';
 
 const useStyles = makeStyles({
   wrapper: {
@@ -33,18 +33,21 @@ const useStyles = makeStyles({
     overflowY: "scroll",
     height: "100%",
     width: "100%",
+    display: "flex",
+    flexDirection: "column-reverse",
   },
   formContainer: {
     overflowY: "scroll",
     height: "100%",
     width: "100%",
-  }
+  },
 });
 
 function App() {
   const classes = useStyles();
   const [data, setData] = useState({ hits: [] });
   const currentUserId = 1;
+  const ws = useRef(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -57,7 +60,41 @@ function App() {
       });
     }
     fetchData()
+
+    ws.current = new WebSocket('ws://localhost:8080/socket');
+    ws.current.onopen = () => console.log("connected");
+    ws.current.onclose = () => console.log("disconnected");
+
+    return () => {
+      ws.current.close();
+    };
   }, []);
+
+  useEffect(() => {
+    if (!ws.current) return;
+
+    ws.current.onmessage = evt => {
+      const message = JSON.parse(evt.data)
+      setData({
+        hits: data.hits.concat(message),
+      })
+    }
+  }, [ws, data.hits]);
+
+  function onSubmit(values, { resetForm }) {
+    if (!values.text) {
+      return;
+    }
+    const message = {
+      userId: 1,
+      chatId: 1,
+      text: values.text,
+      createdAt: "2020-01-02T15:04:07-0700"
+    };
+
+    ws.current.send(JSON.stringify(message));
+    resetForm();
+  }
 
   return (
     <Container maxWidth="md">
@@ -97,7 +134,7 @@ function App() {
         <Grid item className={classes.formWrapper}>
           <Paper className={classes.formContainer}>
             <Box p={2}>
-              <SendMessageForm />
+              <SendMessageForm onSubmit={onSubmit} />
             </Box>
           </Paper>
         </Grid>
