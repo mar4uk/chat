@@ -2,13 +2,21 @@ version: "3.7"
 
 services:
   server:
-    build: 
+    build:
       context: ./server
       dockerfile: Dockerfile
-    depends_on: 
+    depends_on:
       - mongo
     ports:
       - 8080:8080
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    depends_on:
+      - server
+    ports:
+    - 3000:80
   mongo:
     image: mongo:latest
     container_name: mongo
