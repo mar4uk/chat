@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -12,7 +13,7 @@ type Message struct {
 	ChatID    int64              `bson:"chatId"`
 	UserID    int64              `bson:"userId"`
 	Text      string             `bson:"text"`
-	CreatedAt string             `bson:"createdAt"`
+	CreatedAt time.Time          `bson:"createdAt"`
 }
 
 // Chat is

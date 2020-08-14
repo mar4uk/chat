@@ -89,7 +89,7 @@ function App() {
       userId: 1,
       chatId: 1,
       text: values.text,
-      createdAt: "2020-01-02T15:04:07-0700"
+      createdAt: moment().toISOString()
     };
 
     ws.current.send(JSON.stringify(message));

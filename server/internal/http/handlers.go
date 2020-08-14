@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/mar4uk/chat/internal/ctxutils"
@@ -20,7 +21,7 @@ type Message struct {
 	ChatID    int64              `json:"chatId"`
 	UserID    int64              `json:"userId"`
 	Text      string             `json:"text"`
-	CreatedAt string             `json:"createdAt"`
+	CreatedAt time.Time          `json:"createdAt"`
 }
 
 type getMessagesHandler struct {

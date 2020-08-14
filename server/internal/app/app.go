@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/mar4uk/chat/internal/store"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +24,7 @@ type Message struct {
 	ID        primitive.ObjectID
 	UserID    int64
 	Text      string
-	CreatedAt string
+	CreatedAt time.Time
 }
 
 // Chat is
