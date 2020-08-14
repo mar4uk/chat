@@ -1,0 +1,11 @@
+database:
+  protocol: mongodb
+  host: localhost
+  port: 27017
+  username: root
+  password: password
+  db-name: chat
+
+server:
+  host: localhost
+  port: 8080

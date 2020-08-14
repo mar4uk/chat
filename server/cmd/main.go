@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+
+	"github.com/mar4uk/chat/configs"
 
 	"github.com/mar4uk/chat/internal/app"
 	"github.com/mar4uk/chat/internal/http"
@@ -13,13 +16,22 @@ func main() {
 	ctx := context.Background()
 
 	var (
-		db    store.Database
-		chat  app.App
-		proxy http.Proxy
-		err   error
+		config *configs.Config
+		db     store.Database
+		chat   app.App
+		proxy  http.Proxy
+		err    error
 	)
 
-	if db, err = store.NewMongoDatabase(ctx, "mongodb://root:password@localhost:27017", "chat"); err != nil {
+	if config, err = configs.ParseConfig("configs/config.yml"); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	addr := fmt.Sprintf("%s://%s:%s@%s:%s", config.Database.Protocol,
+		config.Database.Username, config.Database.Password, config.Database.Host, config.Database.Port)
+
+	if db, err = store.NewMongoDatabase(ctx, addr, config.Database.Name); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -29,7 +41,7 @@ func main() {
 
 	proxy = http.NewProxy(chat)
 
-	if err = proxy.Serve(); err != nil {
+	if err = proxy.Serve(config.Server); err != nil {
 		log.Fatal(err)
 		return
 	}
