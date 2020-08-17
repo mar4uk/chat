@@ -28,10 +28,15 @@ func main() {
 		return
 	}
 
-	addr := fmt.Sprintf("%s://%s:%s@%s:%s", config.Database.Protocol,
-		config.Database.Username, config.Database.Password, config.Database.Host, config.Database.Port)
+	// if logger, err = logger.NewLogger(config); err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
 
-	if db, err = store.NewMongoDatabase(ctx, addr, config.Database.Name); err != nil {
+	addr := fmt.Sprintf("%s://%s:%s@%s:%s", config.Mongo.Protocol,
+		config.Mongo.Username, config.Mongo.Password, config.Mongo.Host, config.Mongo.Port)
+
+	if db, err = store.NewMongoDatabase(ctx, addr, config.Mongo.Name); err != nil {
 		log.Fatal(err)
 		return
 	}
@@ -39,9 +44,9 @@ func main() {
 
 	chat = app.NewApp(db)
 
-	proxy = http.NewProxy(chat)
+	proxy = http.NewProxy(chat, config.Server)
 
-	if err = proxy.Serve(config.Server); err != nil {
+	if err = proxy.Serve(); err != nil {
 		log.Fatal(err)
 		return
 	}

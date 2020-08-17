@@ -10,24 +10,29 @@ import (
 
 // Proxy is
 type Proxy interface {
-	Serve(server configs.ServerConfig) error
+	Serve() error
 }
 
 type proxy struct {
-	app app.App
+	app  app.App
+	host string
+	port uint16
 }
 
 // NewProxy is
-func NewProxy(app app.App) Proxy {
+func NewProxy(app app.App, config configs.ServerConfig) Proxy {
 	return &proxy{
-		app: app,
+		app:  app,
+		host: config.Host,
+		port: config.Port,
 	}
 }
 
-func (p *proxy) Serve(server configs.ServerConfig) error {
+func (p *proxy) Serve() error {
 	r := setupRouter(p.app)
-	fmt.Printf("Server is running on http://%s:%s\n", server.Host, server.Port)
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%s", server.Host, server.Port), r); err != nil {
+	addr := fmt.Sprintf("%s:%d", p.host, p.port)
+	fmt.Printf("Server is running on http://%s\n", addr)
+	if err := http.ListenAndServe(addr, r); err != nil {
 		return err
 	}
 

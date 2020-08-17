@@ -25,6 +25,30 @@ func middlewares() chi.Middlewares {
 	}
 }
 
+type middleware func(next http.Handler) http.Handler
+
+func chatMiddleware(a app.App) middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			chatID, err := strconv.ParseInt(chi.URLParam(r, "chatID"), 10, 64)
+			if err != nil {
+				render.Render(w, r, ErrInvalidRequest(err))
+				return
+			}
+			ctx := r.Context()
+			chat, err := a.GetChat(ctx, chatID)
+			if err != nil {
+				http.Error(w, http.StatusText(404), 404)
+				return
+			}
+
+			ctx = ctxutils.SetChat(ctx, chat)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func setupRouter(a app.App) http.Handler {
 	r := chi.NewRouter().With(middlewares()...)
 
@@ -32,31 +56,11 @@ func setupRouter(a app.App) http.Handler {
 		w.Write([]byte("hi"))
 	})
 
-	r.Route("/chat", func(r chi.Router) {
-		r.Route("/{chatID}", func(r chi.Router) {
-			r.Use(func(next http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					chatID, err := strconv.ParseInt(chi.URLParam(r, "chatID"), 10, 64)
-					if err != nil {
-						render.Render(w, r, ErrInvalidRequest(err))
-						return
-					}
-					ctx := r.Context()
-					chat, err := a.GetChat(ctx, chatID)
-					if err != nil {
-						http.Error(w, http.StatusText(404), 404)
-						return
-					}
+	r.Route("/chat/{chatID}", func(r chi.Router) {
+		r.Use(chatMiddleware(a))
 
-					ctx = ctxutils.SetChat(ctx, chat)
-
-					next.ServeHTTP(w, r.WithContext(ctx))
-				})
-			})
-
-			r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a})
-			r.Method(http.MethodPost, "/messages", &createMessageHandler{app: a})
-		})
+		r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a})
+		r.Method(http.MethodPost, "/messages", &createMessageHandler{app: a})
 	})
 
 	r.Method(http.MethodGet, "/socket", &websocketHandler{app: a})

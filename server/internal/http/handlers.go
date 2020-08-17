@@ -85,13 +85,13 @@ func (h *createMessageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	render.Render(w, r, m)
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("upgrade:", err)
