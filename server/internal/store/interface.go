@@ -22,10 +22,20 @@ type Chat struct {
 	Title string
 }
 
+// User is
+type User struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Name     string             `bson:"name"`
+	Email    string             `bson:"email"`
+	Password string             `bson:"password"`
+}
+
 // Database is main interface to any DB
 type Database interface {
 	GetMessages(ctx context.Context, chatID int64) ([]Message, error)
 	GetChat(ctx context.Context, chatID int64) (*Chat, error)
 	CreateMessage(ctx context.Context, message Message) (primitive.ObjectID, error)
+	CreateUser(ctx context.Context, user User) (primitive.ObjectID, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	Close(ctx context.Context)
 }

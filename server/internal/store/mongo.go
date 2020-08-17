@@ -82,3 +82,23 @@ func (m *mongoDatabase) CreateMessage(ctx context.Context, message Message) (pri
 
 	return message.ID, nil
 }
+
+func (m *mongoDatabase) CreateUser(ctx context.Context, user User) (primitive.ObjectID, error) {
+	user.ID = primitive.NewObjectID()
+
+	if _, err := m.db.Collection("users").InsertOne(ctx, user); err != nil {
+		return primitive.NilObjectID, err
+	}
+
+	return user.ID, nil
+}
+
+func (m *mongoDatabase) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	var user *User
+
+	if err := m.db.Collection("users").FindOne(ctx, bson.M{"email": email}).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

@@ -19,3 +19,13 @@ func MessagesListResponse(messages []*Message) []render.Renderer {
 	}
 	return list
 }
+
+// Render method for user
+func (m *User) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+// Render method for LoginResponse
+func (resp LoginResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}

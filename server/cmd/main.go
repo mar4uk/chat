@@ -8,6 +8,7 @@ import (
 	"github.com/mar4uk/chat/configs"
 
 	"github.com/mar4uk/chat/internal/app"
+	"github.com/mar4uk/chat/internal/auth"
 	"github.com/mar4uk/chat/internal/http"
 	"github.com/mar4uk/chat/internal/store"
 )
@@ -19,6 +20,7 @@ func main() {
 		config *configs.Config
 		db     store.Database
 		chat   app.App
+		ah     auth.Auth
 		proxy  http.Proxy
 		err    error
 	)
@@ -43,8 +45,9 @@ func main() {
 	defer db.Close(ctx)
 
 	chat = app.NewApp(db)
+	ah = auth.NewAuth(db)
 
-	proxy = http.NewProxy(chat, config.Server)
+	proxy = http.NewProxy(chat, ah, config.Server)
 
 	if err = proxy.Serve(); err != nil {
 		log.Fatal(err)

@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/mar4uk/chat/internal/app"
+	"github.com/mar4uk/chat/internal/auth"
 	"github.com/mar4uk/chat/internal/ctxutils"
 )
 
@@ -49,12 +50,15 @@ func chatMiddleware(a app.App) middleware {
 	}
 }
 
-func setupRouter(a app.App) http.Handler {
+func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r := chi.NewRouter().With(middlewares()...)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hi"))
 	})
+
+	r.Method(http.MethodPost, "/register", &registerUserHandler{auth: ah})
+	r.Method(http.MethodPost, "/login", &loginUserHandler{auth: ah})
 
 	r.Route("/chat/{chatID}", func(r chi.Router) {
 		r.Use(chatMiddleware(a))
