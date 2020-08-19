@@ -42,6 +42,8 @@ type loginUserHandler struct {
 	auth auth.Auth
 }
 
+var jwtSecret = "secret"
+
 func (h *registerUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var user *User
 
@@ -111,9 +113,10 @@ func (h *loginUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt: expiresAt,
 		},
 	}
+
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 
-	tokenString, err := token.SignedString([]byte("secret"))
+	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		render.Render(w, r, ErrInternalServer(err))
 		return

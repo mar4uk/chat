@@ -3,7 +3,9 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
@@ -50,6 +52,33 @@ func chatMiddleware(a app.App) middleware {
 	}
 }
 
+func verifyJwtMiddleware(a app.App) middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var header = r.Header.Get("Authorization")
+			header = strings.Split(header, " ")[1]
+
+			if header == "" {
+				render.Render(w, r, &ErrResponse{HTTPStatusCode: 401, StatusText: "Unauthorized."})
+				return
+			}
+
+			tk := &Token{}
+
+			_, err := jwt.ParseWithClaims(header, tk, func(token *jwt.Token) (interface{}, error) {
+				return []byte(jwtSecret), nil
+			})
+
+			if err != nil {
+				render.Render(w, r, ErrInternalServer(err))
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r := chi.NewRouter().With(middlewares()...)
 
@@ -61,6 +90,7 @@ func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r.Method(http.MethodPost, "/login", &loginUserHandler{auth: ah})
 
 	r.Route("/chat/{chatID}", func(r chi.Router) {
+		r.Use(verifyJwtMiddleware(a))
 		r.Use(chatMiddleware(a))
 
 		r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a})
