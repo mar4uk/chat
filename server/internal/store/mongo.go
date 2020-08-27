@@ -84,13 +84,13 @@ func (m *mongoDatabase) CreateMessage(ctx context.Context, message Message) (pri
 }
 
 func (m *mongoDatabase) CreateUser(ctx context.Context, user User) (primitive.ObjectID, error) {
-	user.ID = primitive.NewObjectID()
+	insertedResult, err := m.db.Collection("users").InsertOne(ctx, user)
 
-	if _, err := m.db.Collection("users").InsertOne(ctx, user); err != nil {
+	if err != nil {
 		return primitive.NilObjectID, err
 	}
 
-	return user.ID, nil
+	return insertedResult.InsertedID.(primitive.ObjectID), nil
 }
 
 func (m *mongoDatabase) GetUserByEmail(ctx context.Context, email string) (*User, error) {
