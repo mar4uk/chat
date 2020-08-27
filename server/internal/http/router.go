@@ -56,6 +56,12 @@ func verifyJwtMiddleware(a app.App) middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var header = r.Header.Get("Authorization")
+
+			if header == "" {
+				render.Render(w, r, &ErrResponse{HTTPStatusCode: 401, StatusText: "Unauthorized."})
+				return
+			}
+
 			header = strings.Split(header, " ")[1]
 
 			if header == "" {
