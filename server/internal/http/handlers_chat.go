@@ -15,7 +15,7 @@ import (
 type Message struct {
 	ID        primitive.ObjectID `json:"id"`
 	ChatID    int64              `json:"chatId"`
-	UserID    int64              `json:"userId"`
+	User      User               `json:"user"`
 	Text      string             `json:"text"`
 	CreatedAt time.Time          `json:"createdAt"`
 }
@@ -41,8 +41,12 @@ func (h *getMessagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	messages := make([]*Message, len(appMessages))
 	for i, message := range appMessages {
 		messages[i] = &Message{
-			ID:        message.ID,
-			UserID:    message.UserID,
+			ID: message.ID,
+			User: User{
+				ID:    message.User.ID,
+				Name:  message.User.Name,
+				Email: message.User.Email,
+			},
 			Text:      message.Text,
 			CreatedAt: message.CreatedAt,
 		}
@@ -64,7 +68,9 @@ func (h *createMessageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	_, err := h.app.CreateMessage(ctx, chat.ID, app.Message{
-		UserID:    m.UserID,
+		User: app.User{
+			ID: m.User.ID,
+		},
 		Text:      m.Text,
 		CreatedAt: m.CreatedAt,
 	})

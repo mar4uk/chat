@@ -46,7 +46,7 @@ const useStyles = makeStyles({
 function App() {
   const classes = useStyles();
   const [data, setData] = useState({ hits: [] });
-  const currentUserId = 1;
+  const currentUserId = '5f47804cb72af73d60f3566b';
   const ws = useRef(null);
 
   useEffect(() => {
@@ -86,7 +86,9 @@ function App() {
       return;
     }
     const message = {
-      userId: 1,
+      user: {
+        id: '5f47804cb72af73d60f3566b'
+      },
       chatId: 1,
       text: values.text,
       createdAt: moment().toISOString()
@@ -103,12 +105,12 @@ function App() {
           <Paper className={classes.chatContainer}>
             <List>
               {data.hits.map((hit) => (
-                <ListItem key={hit.id} style={{justifyContent: hit.userId === currentUserId ? "flex-end" : "flex-start"}}>
+                <ListItem key={hit.id} style={{justifyContent: hit.user.id === currentUserId ? "flex-end" : "flex-start"}}>
                   <Box color="primary.text" p={2} boxShadow={1}>
                     <ListItemText
                       primary={
                         <Typography component="span" variant="subtitle1">
-                          {hit.userId}
+                          {hit.user.name}
                         </Typography>
                       }
                       secondary={

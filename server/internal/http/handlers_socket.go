@@ -15,20 +15,21 @@ type websocketHandler struct {
 }
 
 func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
 	}
 
-	c, err := upgrader.Upgrade(w, r, nil)
+	channel, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("upgrade:", err)
 		return
 	}
-	defer c.Close()
+	defer channel.Close()
 	for {
-		mt, message, err := c.ReadMessage()
+		messageType, message, err := channel.ReadMessage()
 		if err != nil {
 			fmt.Println("read:", err)
 			break
@@ -42,8 +43,10 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		messageID, err := h.app.CreateMessage(r.Context(), m.ChatID, app.Message{
-			UserID:    m.UserID,
+		messageID, err := h.app.CreateMessage(ctx, m.ChatID, app.Message{
+			User: app.User{
+				ID: m.User.ID,
+			},
 			Text:      m.Text,
 			CreatedAt: m.CreatedAt,
 		})
@@ -54,7 +57,20 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		msg, err := json.Marshal(m)
+		msg, err := h.app.GetMessageByID(ctx, messageID)
+
+		if err != nil {
+			render.Render(w, r, ErrInternalServer(err))
+			return
+		}
+
+		m.User = User{
+			ID:    msg.User.ID,
+			Name:  msg.User.Name,
+			Email: msg.User.Email,
+		}
+
+		byteMsg, err := json.Marshal(m)
 
 		if err != nil {
 			fmt.Println("marshal:", err)
@@ -62,9 +78,9 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fmt.Printf("recv: %s", msg)
+		fmt.Printf("recv: %s", byteMsg)
 
-		err = c.WriteMessage(mt, msg)
+		err = channel.WriteMessage(messageType, byteMsg)
 		if err != nil {
 			fmt.Println("write:", err)
 			break

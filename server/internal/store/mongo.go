@@ -74,6 +74,16 @@ func (m *mongoDatabase) GetChat(ctx context.Context, chatID int64) (*Chat, error
 	return chat, nil
 }
 
+func (m *mongoDatabase) GetMessageByID(ctx context.Context, id primitive.ObjectID) (Message, error) {
+	var message Message
+
+	if err := m.db.Collection("messages").FindOne(ctx, bson.M{"_id": id}).Decode(&message); err != nil {
+		return Message{}, err
+	}
+
+	return message, nil
+}
+
 func (m *mongoDatabase) CreateMessage(ctx context.Context, message Message) (primitive.ObjectID, error) {
 	message.ID = primitive.NewObjectID()
 	if _, err := m.db.Collection("messages").InsertOne(ctx, message); err != nil {
@@ -97,6 +107,16 @@ func (m *mongoDatabase) GetUserByEmail(ctx context.Context, email string) (*User
 	var user *User
 
 	if err := m.db.Collection("users").FindOne(ctx, bson.M{"email": email}).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (m *mongoDatabase) GetUserByID(ctx context.Context, id primitive.ObjectID) (*User, error) {
+	var user *User
+
+	if err := m.db.Collection("users").FindOne(ctx, bson.M{"_id": id}).Decode(&user); err != nil {
 		return nil, err
 	}
 

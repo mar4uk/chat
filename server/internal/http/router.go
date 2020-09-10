@@ -96,7 +96,7 @@ func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r.Method(http.MethodPost, "/login", &loginUserHandler{auth: ah})
 
 	r.Route("/chat/{chatID}", func(r chi.Router) {
-		r.Use(verifyJwtMiddleware(a))
+		// r.Use(verifyJwtMiddleware(a))
 		r.Use(chatMiddleware(a))
 
 		r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a})
