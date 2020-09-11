@@ -22,9 +22,9 @@ type User struct {
 
 // Token struct declaration
 type Token struct {
-	UserID primitive.ObjectID
-	Name   string
-	Email  string
+	UserID primitive.ObjectID `json:"userId"`
+	Name   string             `json:"name"`
+	Email  string             `json:"email"`
 	*jwt.StandardClaims
 }
 

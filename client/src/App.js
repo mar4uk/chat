@@ -51,9 +51,13 @@ function App() {
 
   useEffect(() => {
     async function fetchData() {
-      const result = await axios(
-        'http://localhost:8080/chat/1/messages',
-      );
+      const result = await axios({
+        url: 'http://localhost:8080/chat/1/messages',
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOiI1ZjQ3ODA0Y2I3MmFmNzNkNjBmMzU2NmIiLCJOYW1lIjoiTWVlIiwiRW1haWwiOiJlbWFpbDFAZXhhbXBsZS5jb20iLCJleHAiOjE2MDU4MDkwNTF9.cSgQFfUA29E6tjCbdVPz_qaBW9IhX9QRIHCMwsnM63c'
+        }
+      });
 
       setData({
         hits: result.data
@@ -61,7 +65,7 @@ function App() {
     }
     fetchData()
 
-    ws.current = new WebSocket('ws://localhost:8080/socket');
+    ws.current = new WebSocket('ws://localhost:8080/socket?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOiI1ZjQ3ODA0Y2I3MmFmNzNkNjBmMzU2NmIiLCJOYW1lIjoiTWVlIiwiRW1haWwiOiJlbWFpbDFAZXhhbXBsZS5jb20iLCJleHAiOjE2MDU4MDkwNTF9.cSgQFfUA29E6tjCbdVPz_qaBW9IhX9QRIHCMwsnM63c');
     ws.current.onopen = () => console.log("connected");
     ws.current.onclose = () => console.log("disconnected");
 
@@ -86,9 +90,6 @@ function App() {
       return;
     }
     const message = {
-      user: {
-        id: '5f47804cb72af73d60f3566b'
-      },
       chatId: 1,
       text: values.text,
       createdAt: moment().toISOString()

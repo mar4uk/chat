@@ -61,6 +61,7 @@ func (h *createMessageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	ctx := r.Context()
 	chat := ctxutils.GetChat(ctx)
+	user := ctxutils.GetUser(ctx)
 
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
@@ -69,7 +70,7 @@ func (h *createMessageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	_, err := h.app.CreateMessage(ctx, chat.ID, app.Message{
 		User: app.User{
-			ID: m.User.ID,
+			ID: user.ID,
 		},
 		Text:      m.Text,
 		CreatedAt: m.CreatedAt,

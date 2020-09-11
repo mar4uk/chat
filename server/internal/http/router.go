@@ -52,35 +52,49 @@ func chatMiddleware(a app.App) middleware {
 	}
 }
 
+func getTokenStringFromRequest(r *http.Request) string {
+	var tokenString = r.URL.Query().Get("jwt")
+
+	var header = r.Header.Get("Authorization")
+
+	if header != "" {
+		tokenString = strings.Split(header, " ")[1]
+	}
+
+	return tokenString
+}
+
 func verifyJwtMiddleware(a app.App) middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var header = r.Header.Get("Authorization")
 
-			if header == "" {
-				render.Render(w, r, &ErrResponse{HTTPStatusCode: 401, StatusText: "Unauthorized."})
-				return
-			}
+			tokenString := getTokenStringFromRequest(r)
 
-			header = strings.Split(header, " ")[1]
-
-			if header == "" {
+			if tokenString == "" {
 				render.Render(w, r, &ErrResponse{HTTPStatusCode: 401, StatusText: "Unauthorized."})
 				return
 			}
 
 			tk := &Token{}
 
-			_, err := jwt.ParseWithClaims(header, tk, func(token *jwt.Token) (interface{}, error) {
+			token, err := jwt.ParseWithClaims(tokenString, tk, func(token *jwt.Token) (interface{}, error) {
 				return []byte(jwtSecret), nil
 			})
 
-			if err != nil {
+			ctx := r.Context()
+
+			if claims, ok := token.Claims.(*Token); ok && token.Valid {
+				ctx = ctxutils.SetUser(ctx, &app.User{
+					ID:    claims.UserID,
+					Name:  claims.Name,
+					Email: claims.Email,
+				})
+			} else {
 				render.Render(w, r, ErrInternalServer(err))
 				return
 			}
 
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
@@ -96,14 +110,14 @@ func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r.Method(http.MethodPost, "/login", &loginUserHandler{auth: ah})
 
 	r.Route("/chat/{chatID}", func(r chi.Router) {
-		// r.Use(verifyJwtMiddleware(a))
+		r.Use(verifyJwtMiddleware(a))
 		r.Use(chatMiddleware(a))
 
 		r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a})
 		r.Method(http.MethodPost, "/messages", &createMessageHandler{app: a})
 	})
 
-	r.Method(http.MethodGet, "/socket", &websocketHandler{app: a})
+	r.With(verifyJwtMiddleware(a)).Method(http.MethodGet, "/socket", &websocketHandler{app: a})
 
 	return r
 }

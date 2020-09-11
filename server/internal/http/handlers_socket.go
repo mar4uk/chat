@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/mar4uk/chat/internal/ctxutils"
+
 	"github.com/go-chi/render"
 	"github.com/gorilla/websocket"
 	"github.com/mar4uk/chat/internal/app"
@@ -43,9 +45,11 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		user := ctxutils.GetUser(ctx)
+
 		messageID, err := h.app.CreateMessage(ctx, m.ChatID, app.Message{
 			User: app.User{
-				ID: m.User.ID,
+				ID: user.ID,
 			},
 			Text:      m.Text,
 			CreatedAt: m.CreatedAt,
@@ -57,17 +61,10 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		msg, err := h.app.GetMessageByID(ctx, messageID)
-
-		if err != nil {
-			render.Render(w, r, ErrInternalServer(err))
-			return
-		}
-
 		m.User = User{
-			ID:    msg.User.ID,
-			Name:  msg.User.Name,
-			Email: msg.User.Email,
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
 		}
 
 		byteMsg, err := json.Marshal(m)
