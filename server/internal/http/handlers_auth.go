@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mar4uk/chat/internal/ctxutils"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/render"
 	"github.com/mar4uk/chat/internal/auth"
@@ -39,6 +41,10 @@ type registerUserHandler struct {
 }
 
 type loginUserHandler struct {
+	auth auth.Auth
+}
+
+type getUserHandler struct {
 	auth auth.Auth
 }
 
@@ -130,5 +136,16 @@ func (h *loginUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Email: user.Email,
 		},
 		Token: tokenString,
+	})
+}
+
+func (h *getUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user := ctxutils.GetUser(r.Context())
+
+	render.Status(r, http.StatusOK)
+	render.Render(w, r, &User{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
 	})
 }

@@ -109,6 +109,11 @@ func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r.Method(http.MethodPost, "/register", &registerUserHandler{auth: ah})
 	r.Method(http.MethodPost, "/login", &loginUserHandler{auth: ah})
 
+	r.Route("/user", func(r chi.Router) {
+		r.Use(verifyJwtMiddleware(a))
+		r.Method(http.MethodGet, "/", &getUserHandler{auth: ah})
+	})
+
 	r.Route("/chat/{chatID}", func(r chi.Router) {
 		r.Use(verifyJwtMiddleware(a))
 		r.Use(chatMiddleware(a))
