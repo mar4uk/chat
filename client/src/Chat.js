@@ -16,9 +16,6 @@ import SendMessageForm from './SendMessageForm';
 import { fetchMessages, sendMessage } from './actions';
 
 const useStyles = makeStyles({
-  wrapper: {
-    height: "100vh",
-  },
   chatWrapper: {
     display: "flex",
     flex: "1 0 80%",

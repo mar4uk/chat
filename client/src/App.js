@@ -2,13 +2,21 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Container,
+  makeStyles
 } from '@material-ui/core';
 
 import Chat from './Chat';
 import Authorization from './Authorization';
 import { fetchUser } from './actions';
 
+const useStyles = makeStyles({
+  wrapper: {
+    height: "100vh",
+  }
+});
+
 function App() {
+  const classes = useStyles()
   const {
     user
   } = useSelector((state) => ({
@@ -22,7 +30,7 @@ function App() {
   }, [dispatch])
   
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="md" className={classes.wrapper}>
       {
         user 
           ? <Chat user={user} />

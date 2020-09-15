@@ -1,32 +1,44 @@
-import React from 'react';
-import { useDispatch } from 'react-redux';
-import { Formik, Field, Form } from 'formik';
+import React, { useState } from 'react';
 
-import { loginUser } from './actions';
+import {
+  Paper,
+  Button,
+  makeStyles
+} from '@material-ui/core';
+import LoginForm from './LoginForm';
+import RegisterForm from './RegisterForm';
 
-const initialValues = {
-  email: '',
-  password: ''
-};
+const useStyles = makeStyles({
+  container: {
+    height: "100%",
+    width: "100%",
+  }
+});
 
 function Authorization() {
-  const dispatch = useDispatch()
-  const onSubmit = (values) => {
-    dispatch(loginUser(values.email, values.password))
-  }
+  const classes = useStyles();
+  const [ view, setView ] = useState('login')
 
+  const onToggleView = () => {
+    setView(view === 'login' ? 'register' : 'login')
+  }
+  
   return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={onSubmit}
-    >
-      <Form>
-        <Field id="email" type="email" name="email" placeholder="Email" />
-        <Field id="password" type="password" name="password" placeholder="Password" />
-        <button type="submit">Submit</button>
-      </Form>
-    </Formik>
-  );
+    <Paper className={classes.container}>
+      {
+        view === 'login'
+          ? <LoginForm />
+          : <RegisterForm />
+      }
+      <Button onClick={onToggleView}>
+        {
+          view === 'login'
+            ? 'Register'
+            : 'Login'
+        }
+      </Button>
+    </Paper>
+  )
 }
 
 export default Authorization;

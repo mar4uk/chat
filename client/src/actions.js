@@ -3,7 +3,8 @@ import {
   FETCH_USER,
   FETCH_MESSAGES,
   POST_MESSAGE,
-  LOGIN_USER
+  LOGIN_USER,
+  REGISTER_USER
 } from './actionTypes';
 
 export const fetchUser = () => {
@@ -112,6 +113,34 @@ export const loginUser = (email, password) => {
     }).catch(() => {
       dispatch({
         type: LOGIN_USER,
+        payload: null
+      });
+    });
+  }
+}
+
+export const registerUser = ({ email, name, password }) => {
+  return (dispatch) => {
+    return axios({
+      url: 'http://localhost:8080/register',
+      method: 'POST',
+      data: {
+        name,
+        email,
+        password
+      }
+    }).then(({ data }) => {
+      dispatch({
+        type: REGISTER_USER,
+        payload: {
+          ...data.user,
+          jwt: data.token
+        }
+      });
+      document.cookie = `jwt=${data.token}`
+    }).catch(() => {
+      dispatch({
+        type: REGISTER_USER,
         payload: null
       });
     });

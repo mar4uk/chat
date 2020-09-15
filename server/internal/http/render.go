@@ -25,7 +25,7 @@ func (m *User) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// Render method for LoginResponse
-func (resp LoginResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render method for UserResponse
+func (resp UserResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

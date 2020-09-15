@@ -30,8 +30,8 @@ type Token struct {
 	*jwt.StandardClaims
 }
 
-// LoginResponse struct declaration
-type LoginResponse struct {
+// UserResponse struct declaration
+type UserResponse struct {
 	User  *User  `json:"user"`
 	Token string `json:"token"`
 }
@@ -69,7 +69,7 @@ func (h *registerUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	user.Password = string(pass)
 
-	_, err = h.auth.CreateUser(ctx, auth.User{
+	userID, err := h.auth.CreateUser(ctx, auth.User{
 		Name:     user.Name,
 		Email:    user.Email,
 		Password: user.Password,
@@ -78,9 +78,35 @@ func (h *registerUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		render.Render(w, r, ErrInternalServer(err))
 		return
 	}
+	user.ID = userID
+
+	expiresAt := time.Now().Add(time.Minute * 100000).Unix()
+	tk := &Token{
+		UserID: user.ID,
+		Name:   user.Name,
+		Email:  user.Email,
+		StandardClaims: &jwt.StandardClaims{
+			ExpiresAt: expiresAt,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		render.Render(w, r, ErrInternalServer(err))
+		return
+	}
 
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, user)
+	render.Render(w, r, UserResponse{
+		User: &User{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		},
+		Token: tokenString,
+	})
 }
 
 func (h *loginUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +155,7 @@ func (h *loginUserHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Status(r, http.StatusOK)
-	render.Render(w, r, LoginResponse{
+	render.Render(w, r, UserResponse{
 		User: &User{
 			ID:    user.ID,
 			Name:  user.Name,
