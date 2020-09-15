@@ -2,7 +2,8 @@ import axios from 'axios';
 import {
   FETCH_USER,
   FETCH_MESSAGES,
-  POST_MESSAGE
+  POST_MESSAGE,
+  LOGIN_USER
 } from './actionTypes';
 
 export const fetchUser = () => {
@@ -15,13 +16,15 @@ export const fetchUser = () => {
       return memo;
     }, {});
     
-    const jwt = cookies.jwt || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySUQiOiI1ZjQ3ODA0Y2I3MmFmNzNkNjBmMzU2NmIiLCJOYW1lIjoiTWVlIiwiRW1haWwiOiJlbWFpbDFAZXhhbXBsZS5jb20iLCJleHAiOjE2MDU4MDkwNTF9.cSgQFfUA29E6tjCbdVPz_qaBW9IhX9QRIHCMwsnM63c'; // TODO FIXME
+    const { jwt } = cookies;
 
     if (!jwt) {
       dispatch({
         type: FETCH_USER,
         payload: null
       });
+      
+      return;
     }
 
     return axios({
@@ -84,6 +87,33 @@ export const sendMessage = (message) => {
     dispatch({
       type: POST_MESSAGE,
       payload: message
+    });
+  }
+}
+
+export const loginUser = (email, password) => {
+  return (dispatch) => {
+    return axios({
+      url: 'http://localhost:8080/login',
+      method: 'POST',
+      data: {
+        email,
+        password
+      }
+    }).then(({ data }) => {
+      dispatch({
+        type: LOGIN_USER,
+        payload: {
+          ...data.user,
+          jwt: data.token
+        }
+      });
+      document.cookie = `jwt=${data.token}`
+    }).catch(() => {
+      dispatch({
+        type: LOGIN_USER,
+        payload: null
+      });
     });
   }
 }

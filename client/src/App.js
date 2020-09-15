@@ -5,6 +5,7 @@ import {
 } from '@material-ui/core';
 
 import Chat from './Chat';
+import Authorization from './Authorization';
 import { fetchUser } from './actions';
 
 function App() {
@@ -25,7 +26,7 @@ function App() {
       {
         user 
           ? <Chat user={user} />
-          : <p>Show registration form</p>
+          : <Authorization />
       }
       
     </Container>

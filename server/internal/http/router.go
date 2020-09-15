@@ -109,6 +109,10 @@ func setupRouter(a app.App, ah auth.Auth) http.Handler {
 	r.Method(http.MethodPost, "/register", &registerUserHandler{auth: ah})
 	r.Method(http.MethodPost, "/login", &loginUserHandler{auth: ah})
 
+	r.Options("/login", func(w http.ResponseWriter, r *http.Request) {
+		render.Status(r, http.StatusOK)
+	})
+
 	r.Route("/user", func(r chi.Router) {
 		r.Use(verifyJwtMiddleware(a))
 		r.Method(http.MethodGet, "/", &getUserHandler{auth: ah})
