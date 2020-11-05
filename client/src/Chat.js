@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from "moment";
 import {
+  Container,
   Typography,
   Paper,
   List,
@@ -16,6 +17,9 @@ import SendMessageForm from './SendMessageForm';
 import { fetchMessages, sendMessage } from './actions';
 
 const useStyles = makeStyles({
+  wrapper: {
+    height: "100vh",
+  },
   chatWrapper: {
     display: "flex",
     flex: "1 0 80%",
@@ -89,7 +93,7 @@ function Chat({ user }) {
   }
 
   return (
-    <>
+    <Container maxWidth="md" className={classes.wrapper}>
       <Grid item className={classes.chatWrapper}>
         <Paper className={classes.chatContainer}>
           <List>
@@ -129,7 +133,7 @@ function Chat({ user }) {
           </Box>
         </Paper>
       </Grid>
-    </>
+    </Container>
   );
 }
 
