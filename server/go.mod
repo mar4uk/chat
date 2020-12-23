@@ -12,6 +12,8 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	go.mongodb.org/mongo-driver v1.4.0
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
 	gopkg.in/yaml.v2 v2.2.2
 )

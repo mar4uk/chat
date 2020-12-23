@@ -7,11 +7,13 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/mar4uk/chat/internal/app"
 	"github.com/mar4uk/chat/internal/auth"
 	"github.com/mar4uk/chat/internal/ctxutils"
+	"github.com/mar4uk/chat/internal/logger"
 )
 
 func middlewares() chi.Middlewares {
@@ -28,9 +30,7 @@ func middlewares() chi.Middlewares {
 	}
 }
 
-type middleware func(next http.Handler) http.Handler
-
-func chatMiddleware(a app.App) middleware {
+func chatMiddleware(a app.App) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			chatID, err := strconv.ParseInt(chi.URLParam(r, "chatID"), 10, 64)
@@ -64,7 +64,11 @@ func getTokenStringFromRequest(r *http.Request) string {
 	return tokenString
 }
 
-func verifyJwtMiddleware(a app.App) middleware {
+func loggerMiddleware(logger *logger.Logger) func(next http.Handler) http.Handler {
+	return middleware.RequestLogger(logger)
+}
+
+func verifyJwtMiddleware(a app.App) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -80,6 +84,11 @@ func verifyJwtMiddleware(a app.App) middleware {
 			token, err := jwt.ParseWithClaims(tokenString, tk, func(token *jwt.Token) (interface{}, error) {
 				return []byte(jwtSecret), nil
 			})
+
+			if err != nil {
+				render.Render(w, r, ErrInternalServer(err))
+				return
+			}
 
 			ctx := r.Context()
 
@@ -99,11 +108,16 @@ func verifyJwtMiddleware(a app.App) middleware {
 	}
 }
 
-func setupRouter(a app.App, ah auth.Auth) http.Handler {
+func setupRouter(a app.App, ah auth.Auth, logger *logger.Logger) http.Handler {
 	r := chi.NewRouter().With(middlewares()...)
+	r.Use(loggerMiddleware(logger))
+	r.Use(middleware.Recoverer)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hi"))
+	})
+	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("this is panic!")
 	})
 
 	r.Method(http.MethodPost, "/register", &registerUserHandler{auth: ah})

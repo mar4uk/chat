@@ -55,12 +55,12 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: m.CreatedAt,
 		})
 
-		m.ID = messageID
 		if err != nil {
 			render.Render(w, r, ErrInternalServer(err))
 			return
 		}
 
+		m.ID = messageID
 		m.User = User{
 			ID:    user.ID,
 			Name:  user.Name,

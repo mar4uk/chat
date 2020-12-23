@@ -10,6 +10,7 @@ import (
 	"github.com/mar4uk/chat/internal/app"
 	"github.com/mar4uk/chat/internal/auth"
 	"github.com/mar4uk/chat/internal/http"
+	"github.com/mar4uk/chat/internal/logger"
 	"github.com/mar4uk/chat/internal/store"
 )
 
@@ -25,21 +26,22 @@ func main() {
 		err    error
 	)
 
-	if config, err = configs.ParseConfig("configs/config.yml"); err != nil {
+	logger, err := logger.NewLogger()
+	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	// if logger, err = logger.NewLogger(config); err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
+	if config, err = configs.ParseConfig("configs/config.yml"); err != nil {
+		logger.Logger.Fatal(err)
+		return
+	}
 
 	addr := fmt.Sprintf("%s://%s:%s@%s:%s", config.Mongo.Protocol,
 		config.Mongo.Username, config.Mongo.Password, config.Mongo.Host, config.Mongo.Port)
 
 	if db, err = store.NewMongoDatabase(ctx, addr, config.Mongo.Name); err != nil {
-		log.Fatal(err)
+		logger.Logger.Fatal(err)
 		return
 	}
 	defer db.Close(ctx)
@@ -47,10 +49,10 @@ func main() {
 	chat = app.NewApp(db)
 	ah = auth.NewAuth(db)
 
-	proxy = http.NewProxy(chat, ah, config.Server)
+	proxy = http.NewProxy(chat, ah, config.Server, logger)
 
 	if err = proxy.Serve(); err != nil {
-		log.Fatal(err)
+		logger.Logger.Fatal(err)
 		return
 	}
 }
