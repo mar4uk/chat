@@ -30,7 +30,7 @@ func middlewares() chi.Middlewares {
 	}
 }
 
-func chatMiddleware(a app.App) func(next http.Handler) http.Handler {
+func chatMiddleware(a app.App, logger *logger.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			chatID, err := strconv.ParseInt(chi.URLParam(r, "chatID"), 10, 64)
@@ -39,9 +39,16 @@ func chatMiddleware(a app.App) func(next http.Handler) http.Handler {
 				return
 			}
 			ctx := r.Context()
-			chat, err := a.GetChat(ctx, chatID)
-			if err != nil {
-				http.Error(w, http.StatusText(404), 404)
+			chat, aerr := a.GetChat(ctx, chatID)
+
+			if aerr != nil {
+				switch aerr.Name {
+				case app.RecordNotFound:
+					render.Render(w, r, ErrNotFound)
+				default:
+					render.Render(w, r, ErrInternalServer(aerr.Error))
+				}
+				logger.Error(aerr.Error)
 				return
 			}
 
@@ -52,31 +59,29 @@ func chatMiddleware(a app.App) func(next http.Handler) http.Handler {
 	}
 }
 
-func getTokenStringFromRequest(r *http.Request) string {
-	var tokenString = r.URL.Query().Get("jwt")
-
-	var header = r.Header.Get("Authorization")
-
-	if header != "" {
-		tokenString = strings.Split(header, " ")[1]
-	}
-
-	return tokenString
-}
-
 func loggerMiddleware(logger *logger.Logger) func(next http.Handler) http.Handler {
 	return middleware.RequestLogger(logger)
 }
 
-func verifyJwtMiddleware(a app.App) func(next http.Handler) http.Handler {
+func verifyJwtMiddleware(a app.App, logger *logger.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authToken := "jwt"
+			authHeader := "Authorization"
+			tokenString := r.URL.Query().Get(authToken)
+			header := r.Header.Get(authHeader)
 
-			tokenString := getTokenStringFromRequest(r)
-
-			if tokenString == "" {
-				render.Render(w, r, &ErrResponse{HTTPStatusCode: 401, StatusText: "Unauthorized."})
+			if tokenString == "" && header == "" {
+				render.Render(w, r, &ErrResponse{
+					HTTPStatusCode: http.StatusUnauthorized,
+					StatusText:     http.StatusText(http.StatusUnauthorized),
+				})
+				logger.MissingArgs(authToken, authHeader+" Header")
 				return
+			}
+
+			if header != "" {
+				tokenString = strings.Split(header, " ")[1]
 			}
 
 			tk := &Token{}
@@ -87,6 +92,7 @@ func verifyJwtMiddleware(a app.App) func(next http.Handler) http.Handler {
 
 			if err != nil {
 				render.Render(w, r, ErrInternalServer(err))
+				logger.Error(err)
 				return
 			}
 
@@ -99,7 +105,10 @@ func verifyJwtMiddleware(a app.App) func(next http.Handler) http.Handler {
 					Email: claims.Email,
 				})
 			} else {
-				render.Render(w, r, ErrInternalServer(err))
+				render.Render(w, r, &ErrResponse{
+					HTTPStatusCode: http.StatusUnauthorized,
+					StatusText:     http.StatusText(http.StatusUnauthorized),
+				})
 				return
 			}
 
@@ -131,19 +140,19 @@ func setupRouter(a app.App, ah auth.Auth, logger *logger.Logger) http.Handler {
 	})
 
 	r.Route("/user", func(r chi.Router) {
-		r.Use(verifyJwtMiddleware(a))
+		r.Use(verifyJwtMiddleware(a, logger))
 		r.Method(http.MethodGet, "/", &getUserHandler{auth: ah})
 	})
 
 	r.Route("/chat/{chatID}", func(r chi.Router) {
-		r.Use(verifyJwtMiddleware(a))
-		r.Use(chatMiddleware(a))
+		r.Use(verifyJwtMiddleware(a, logger))
+		r.Use(chatMiddleware(a, logger))
 
-		r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a})
-		r.Method(http.MethodPost, "/messages", &createMessageHandler{app: a})
+		r.Method(http.MethodGet, "/messages", &getMessagesHandler{app: a, logger: logger})
+		r.Method(http.MethodPost, "/messages", &createMessageHandler{app: a, logger: logger})
 	})
 
-	r.With(verifyJwtMiddleware(a)).Method(http.MethodGet, "/socket", &websocketHandler{app: a, logger: logger})
+	r.With(verifyJwtMiddleware(a, logger)).Method(http.MethodGet, "/socket", &websocketHandler{app: a, logger: logger})
 
 	return r
 }

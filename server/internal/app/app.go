@@ -8,16 +8,29 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type ErrorName string
+
+const (
+	RecordNotFound ErrorName = "Record not found"
+	InvalidArgs    ErrorName = "Invalid params"
+)
+
 // App is interface of chat application
 type App interface {
-	GetMessageByID(ctx context.Context, messageID primitive.ObjectID) (Message, error)
-	GetMessages(ctx context.Context, chatID int64) ([]*Message, error)
-	GetChat(ctx context.Context, chatID int64) (*Chat, error)
-	CreateMessage(ctx context.Context, chatID int64, message Message) (primitive.ObjectID, error)
+	GetMessageByID(ctx context.Context, messageID primitive.ObjectID) (Message, *Error)
+	GetMessages(ctx context.Context, chatID int64) ([]*Message, *Error)
+	GetChat(ctx context.Context, chatID int64) (*Chat, *Error)
+	CreateMessage(ctx context.Context, chatID int64, message Message) (primitive.ObjectID, *Error)
 }
 
 type app struct {
 	db store.Database
+}
+
+// Error is struc for app error
+type Error struct {
+	Error error
+	Name  ErrorName
 }
 
 // User is struct in Message struct
@@ -48,11 +61,11 @@ func NewApp(db store.Database) App {
 	}
 }
 
-func (a *app) GetMessages(ctx context.Context, chatID int64) ([]*Message, error) {
+func (a *app) GetMessages(ctx context.Context, chatID int64) ([]*Message, *Error) {
 	dbMessages, err := a.db.GetMessages(ctx, chatID)
 
 	if err != nil {
-		return nil, err
+		return nil, &Error{err, RecordNotFound}
 	}
 
 	var messages []*Message
@@ -67,7 +80,7 @@ func (a *app) GetMessages(ctx context.Context, chatID int64) ([]*Message, error)
 		dbUser, err := a.db.GetUserByID(ctx, userID)
 
 		if err != nil {
-			return nil, err
+			return nil, &Error{err, RecordNotFound}
 		}
 
 		users[userID] = User{
@@ -89,17 +102,17 @@ func (a *app) GetMessages(ctx context.Context, chatID int64) ([]*Message, error)
 	return messages, nil
 }
 
-func (a *app) GetMessageByID(ctx context.Context, messageID primitive.ObjectID) (Message, error) {
+func (a *app) GetMessageByID(ctx context.Context, messageID primitive.ObjectID) (Message, *Error) {
 	dbMessage, err := a.db.GetMessageByID(ctx, messageID)
 
 	if err != nil {
-		return Message{}, err
+		return Message{}, &Error{err, RecordNotFound}
 	}
 
 	dbUser, err := a.db.GetUserByID(ctx, dbMessage.UserID)
 
 	if err != nil {
-		return Message{}, err
+		return Message{}, &Error{err, RecordNotFound}
 	}
 
 	return Message{
@@ -114,11 +127,11 @@ func (a *app) GetMessageByID(ctx context.Context, messageID primitive.ObjectID) 
 	}, nil
 }
 
-func (a *app) GetChat(ctx context.Context, chatID int64) (*Chat, error) {
+func (a *app) GetChat(ctx context.Context, chatID int64) (*Chat, *Error) {
 	dbChat, err := a.db.GetChat(ctx, chatID)
 
 	if err != nil {
-		return nil, err
+		return nil, &Error{err, RecordNotFound}
 	}
 
 	return &Chat{
@@ -127,7 +140,7 @@ func (a *app) GetChat(ctx context.Context, chatID int64) (*Chat, error) {
 	}, nil
 }
 
-func (a *app) CreateMessage(ctx context.Context, chatID int64, message Message) (primitive.ObjectID, error) {
+func (a *app) CreateMessage(ctx context.Context, chatID int64, message Message) (primitive.ObjectID, *Error) {
 	messageID, err := a.db.CreateMessage(ctx, store.Message{
 		ChatID:    chatID,
 		UserID:    message.User.ID,
@@ -136,7 +149,7 @@ func (a *app) CreateMessage(ctx context.Context, chatID int64, message Message) 
 	})
 
 	if err != nil {
-		return messageID, err
+		return messageID, &Error{err, InvalidArgs}
 	}
 
 	return messageID, nil

@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/middleware"
@@ -29,6 +30,11 @@ func (l *Logger) Error(args ...interface{}) {
 	l.Logger.Error(args...)
 }
 
+// Errorf is method to log formatted message
+func (l *Logger) Errorf(template string, args ...interface{}) {
+	l.Logger.Errorf(template, args...)
+}
+
 // Fatal is method to log fatal error
 func (l *Logger) Fatal(args ...interface{}) {
 	l.Logger.Fatal(args...)
@@ -38,6 +44,17 @@ func (l *Logger) Fatal(args ...interface{}) {
 func (l *Logger) WithFields(args ...interface{}) *Logger {
 	l.Logger = l.Logger.With(args...)
 	return l
+}
+
+var (
+	invalidArgMessage      = "Invalid arg: %s"
+	invalidArgValueMessage = "Invalid value for argument: %s: %v"
+	missingArgMessage      = "Missing args: %s"
+)
+
+// MissingArgs is method log error message about missing arguments
+func (l *Logger) MissingArgs(args ...string) {
+	l.Errorf(missingArgMessage, strings.Join(args, ", "))
 }
 
 // NewLogger creates new instance of logger

@@ -48,7 +48,7 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		user := ctxutils.GetUser(ctx)
 
-		messageID, err := h.app.CreateMessage(ctx, m.ChatID, app.Message{
+		messageID, aerr := h.app.CreateMessage(ctx, m.ChatID, app.Message{
 			User: app.User{
 				ID: user.ID,
 			},
@@ -56,8 +56,8 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: m.CreatedAt,
 		})
 
-		if err != nil {
-			render.Render(w, r, ErrInternalServer(err))
+		if aerr != nil {
+			render.Render(w, r, ErrInternalServer(aerr.Error))
 			return
 		}
 

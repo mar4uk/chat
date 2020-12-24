@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/mar4uk/chat/internal/app"
 	"github.com/mar4uk/chat/internal/ctxutils"
+	"github.com/mar4uk/chat/internal/logger"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -21,11 +22,13 @@ type Message struct {
 }
 
 type getMessagesHandler struct {
-	app app.App
+	app    app.App
+	logger *logger.Logger
 }
 
 type createMessageHandler struct {
-	app app.App
+	app    app.App
+	logger *logger.Logger
 }
 
 func (h *getMessagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +37,7 @@ func (h *getMessagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	appMessages, err := h.app.GetMessages(ctx, chat.ID)
 	if err != nil {
-		render.Render(w, r, ErrInternalServer(err))
+		render.Render(w, r, ErrInternalServer(err.Error))
 		return
 	}
 
@@ -76,7 +79,14 @@ func (h *createMessageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		CreatedAt: m.CreatedAt,
 	})
 	if err != nil {
-		render.Render(w, r, ErrInternalServer(err))
+		switch err.Name {
+		case app.InvalidArgs:
+			render.Render(w, r, ErrInvalidRequest(err.Error))
+			h.logger.Error(err.Error)
+		default:
+			render.Render(w, r, ErrInternalServer(err.Error))
+		}
+
 		return
 	}
 

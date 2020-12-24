@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -48,7 +47,6 @@ func (m *mongoDatabase) GetMessages(ctx context.Context, chatID int64) ([]Messag
 	cursor, err := m.db.Collection("messages").Find(ctx, bson.M{"chatId": chatID})
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	defer cursor.Close(ctx)
@@ -56,7 +54,6 @@ func (m *mongoDatabase) GetMessages(ctx context.Context, chatID int64) ([]Messag
 	for cursor.Next(ctx) {
 		var message Message
 		if err = cursor.Decode(&message); err != nil {
-			log.Fatal(err)
 			return nil, err
 		}
 		list = append(list, message)
