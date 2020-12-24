@@ -143,7 +143,7 @@ func setupRouter(a app.App, ah auth.Auth, logger *logger.Logger) http.Handler {
 		r.Method(http.MethodPost, "/messages", &createMessageHandler{app: a})
 	})
 
-	r.With(verifyJwtMiddleware(a)).Method(http.MethodGet, "/socket", &websocketHandler{app: a})
+	r.With(verifyJwtMiddleware(a)).Method(http.MethodGet, "/socket", &websocketHandler{app: a, logger: logger})
 
 	return r
 }

@@ -9,10 +9,38 @@ import (
 	"go.uber.org/zap"
 )
 
+// Logger is struct which describes logger
 type Logger struct {
 	Logger *zap.SugaredLogger
 }
 
+// Info is method to log string message
+func (l *Logger) Info(args ...interface{}) {
+	l.Logger.Info(args...)
+}
+
+// Infof is method to log formatted message
+func (l *Logger) Infof(template string, args ...interface{}) {
+	l.Logger.Infof(template, args...)
+}
+
+// Error is method to log string error
+func (l *Logger) Error(args ...interface{}) {
+	l.Logger.Error(args...)
+}
+
+// Fatal is method to log fatal error
+func (l *Logger) Fatal(args ...interface{}) {
+	l.Logger.Fatal(args...)
+}
+
+// WithFields is method to add context to log message
+func (l *Logger) WithFields(args ...interface{}) *Logger {
+	l.Logger = l.Logger.With(args...)
+	return l
+}
+
+// NewLogger creates new instance of logger
 func NewLogger() (*Logger, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -24,8 +52,9 @@ func NewLogger() (*Logger, error) {
 	return &Logger{sugar}, nil
 }
 
+// NewLogEntry creates logger with context, used for access logs
 func (l *Logger) NewLogEntry(r *http.Request) middleware.LogEntry {
-	entry := &LoggerEntry{Logger: l.Logger}
+	entry := &Entry{Logger: l.Logger}
 
 	scheme := "http"
 	if r.TLS != nil {
@@ -46,11 +75,13 @@ func (l *Logger) NewLogEntry(r *http.Request) middleware.LogEntry {
 	return entry
 }
 
-type LoggerEntry struct {
+// Entry describes logger
+type Entry struct {
 	Logger *zap.SugaredLogger
 }
 
-func (l *LoggerEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
+// Write adds context info to entry
+func (l *Entry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	l.Logger = l.Logger.With(
 		"status", status,
 		"resp_bytes_length", bytes,
@@ -59,7 +90,8 @@ func (l *LoggerEntry) Write(status, bytes int, header http.Header, elapsed time.
 	l.Logger.Info("request complete")
 }
 
-func (l *LoggerEntry) Panic(v interface{}, stack []byte) {
+// Panic adds context to entry in case of panic
+func (l *Entry) Panic(v interface{}, stack []byte) {
 	l.Logger = l.Logger.With(
 		"stack", string(stack),
 		"panic", fmt.Sprintf("%+v", v),

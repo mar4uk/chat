@@ -2,10 +2,10 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/mar4uk/chat/internal/ctxutils"
+	"github.com/mar4uk/chat/internal/logger"
 
 	"github.com/go-chi/render"
 	"github.com/gorilla/websocket"
@@ -13,7 +13,8 @@ import (
 )
 
 type websocketHandler struct {
-	app app.App
+	app    app.App
+	logger *logger.Logger
 }
 
 func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -26,21 +27,21 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	channel, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("upgrade:", err)
+		h.logger.Error("websocket upgrade failed", err)
 		return
 	}
 	defer channel.Close()
 	for {
 		messageType, message, err := channel.ReadMessage()
 		if err != nil {
-			fmt.Println("read:", err)
+			h.logger.Error("websocket read failed", err)
 			break
 		}
 
 		var m *Message
 
 		if err := json.Unmarshal(message, &m); err != nil {
-			fmt.Println("unmarshal:", err)
+			h.logger.Error("websocket message unmarshalling failed:", err)
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
@@ -70,16 +71,16 @@ func (h *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		byteMsg, err := json.Marshal(m)
 
 		if err != nil {
-			fmt.Println("marshal:", err)
+			h.logger.Error("websocket message marshalling failed:", err)
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
-		fmt.Printf("recv: %s", byteMsg)
+		h.logger.Infof("websocket message %s", byteMsg)
 
 		err = channel.WriteMessage(messageType, byteMsg)
 		if err != nil {
-			fmt.Println("write:", err)
+			h.logger.Error("websocket write message failed:", err)
 			break
 		}
 	}

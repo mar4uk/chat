@@ -37,10 +37,14 @@ func NewProxy(app app.App, auth auth.Auth, config configs.ServerConfig, logger *
 func (p *proxy) Serve() error {
 	r := setupRouter(p.app, p.auth, p.logger)
 	addr := fmt.Sprintf("%s:%d", p.host, p.port)
-	fmt.Printf("Server is running on http://%s\n", addr)
+
+	p.logger.WithFields(
+		"host", p.host,
+		"port", p.port,
+	).Info("Server is running")
+
 	if err := http.ListenAndServe(addr, r); err != nil {
 		return err
 	}
-
 	return nil
 }

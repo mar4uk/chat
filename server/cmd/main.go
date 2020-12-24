@@ -33,7 +33,7 @@ func main() {
 	}
 
 	if config, err = configs.ParseConfig("configs/config.yml"); err != nil {
-		logger.Logger.Fatal(err)
+		logger.Fatal(err)
 		return
 	}
 
@@ -41,7 +41,7 @@ func main() {
 		config.Mongo.Username, config.Mongo.Password, config.Mongo.Host, config.Mongo.Port)
 
 	if db, err = store.NewMongoDatabase(ctx, addr, config.Mongo.Name); err != nil {
-		logger.Logger.Fatal(err)
+		logger.Fatal(err)
 		return
 	}
 	defer db.Close(ctx)
@@ -52,7 +52,7 @@ func main() {
 	proxy = http.NewProxy(chat, ah, config.Server, logger)
 
 	if err = proxy.Serve(); err != nil {
-		logger.Logger.Fatal(err)
+		logger.Fatal(err)
 		return
 	}
 }
