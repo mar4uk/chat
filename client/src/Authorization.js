@@ -58,7 +58,7 @@ function Authorization() {
               ? <LoginForm />
               : <RegisterForm />
           }
-          <Grid container justify="flex-end">
+          <Grid container justifyContent="flex-end">
             <Grid item>
               <Link component="button" onClick={onToggleView} variant="body2">
                 {
